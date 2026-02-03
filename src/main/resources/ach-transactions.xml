@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<achTransactions>
+    <transaction>
+        <transactionId>ACH-2024-001</transactionId>
+        <originatingDfi>021000021</originatingDfi>
+        <receivingDfi>091000022</receivingDfi>
+        <amount>15000.00</amount>
+        <effectiveEntryDate>2024-02-01</effectiveEntryDate>
+    </transaction>
+    <transaction>
+        <transactionId>ACH-2024-002</transactionId>
+        <originatingDfi>021000089</originatingDfi>
+        <receivingDfi>091000019</receivingDfi>
+        <amount>30000.00</amount>
+        <effectiveEntryDate>2024-02-03</effectiveEntryDate>
+    </transaction>
+    <transaction>
+        <transactionId>ACH-2024-003</transactionId>
+        <originatingDfi>021000090</originatingDfi>
+        <receivingDfi>091000020</receivingDfi>
+        <amount>40000.00</amount>
+        <effectiveEntryDate>2024-02-03</effectiveEntryDate>
+    </transaction>
+    <transaction>
+        <transactionId>ACH-2024-004</transactionId>
+        <originatingDfi>021000091</originatingDfi>
+        <receivingDfi>091000021</receivingDfi>
+        <amount>10000.00</amount>
+        <effectiveEntryDate>2024-02-03</effectiveEntryDate>
+    </transaction>
+    <transaction>
+        <transactionId>ACH-2024-005</transactionId>
+        <originatingDfi>021000092</originatingDfi>
+        <receivingDfi>091000022</receivingDfi>
+        <amount>50000.00</amount>
+        <effectiveEntryDate>2024-02-03</effectiveEntryDate>
+    </transaction>
+</achTransactions>
