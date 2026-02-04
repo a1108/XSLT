@@ -1,8 +1,14 @@
 package org.example.model;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.math.BigDecimal;
 
+@Entity
+@Table(name = "ach_transactions")
 public class AchTransaction {
+    @Id
     private String transactionId;
     private String originatingDfi;
     private String receivingDfi;

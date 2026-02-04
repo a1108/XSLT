@@ -1,66 +1,95 @@
 package org.example.service;
 
 import org.example.model.AchTransaction;
-import org.springframework.core.io.ClassPathResource;
+import org.example.repository.AchTransactionRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import java.io.InputStream;
-import java.math.BigDecimal;
-import java.util.ArrayList;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.StringWriter;
 import java.util.List;
 
 @Service
 public class AchService {
 
-    public List<AchTransaction> getAchTransactions() {
-        List<AchTransaction> transactions = new ArrayList<>();
-        
+    private static final Logger logger = LoggerFactory.getLogger(AchService.class);
+
+    private final AchTransactionRepository repository;
+
+    public AchService(AchTransactionRepository repository) {
+        this.repository = repository;
+    }
+
+    public String convertTransactionsToXml() {
+        logger.info("Starting conversion of transactions to XML");
         try {
-            ClassPathResource resource = new ClassPathResource("ach-transactions.xml");
-            InputStream inputStream = resource.getInputStream();
+            logger.debug("Fetching all transactions from repository");
+            List<AchTransaction> transactions = repository.findAll();
+            logger.info("Retrieved {} transactions from database", transactions.size());
             
+            logger.debug("Building XML document structure");
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = factory.newDocumentBuilder();
-            Document document = builder.parse(inputStream);
+            Document document = builder.newDocument();
             
-            document.getDocumentElement().normalize();
+            Element root = document.createElement("achTransactions");
+            document.appendChild(root);
             
-            NodeList transactionNodes = document.getElementsByTagName("transaction");
-            
-            for (int i = 0; i < transactionNodes.getLength(); i++) {
-                Element element = (Element) transactionNodes.item(i);
+            logger.debug("Converting {} transactions to XML elements", transactions.size());
+            for (AchTransaction txn : transactions) {
+                Element transaction = document.createElement("transaction");
                 
-                String transactionId = getTagValue("transactionId", element);
-                String originatingDfi = getTagValue("originatingDfi", element);
-                String receivingDfi = getTagValue("receivingDfi", element);
-                BigDecimal amount = new BigDecimal(getTagValue("amount", element));
-                String effectiveEntryDate = getTagValue("effectiveEntryDate", element);
+                Element transactionId = document.createElement("transactionId");
+                transactionId.setTextContent(txn.getTransactionId());
+                transaction.appendChild(transactionId);
                 
-                AchTransaction transaction = new AchTransaction(
-                    transactionId, originatingDfi, receivingDfi, amount, effectiveEntryDate
-                );
-                transactions.add(transaction);
+                Element originatingDfi = document.createElement("originatingDfi");
+                originatingDfi.setTextContent(txn.getOriginatingDfi());
+                transaction.appendChild(originatingDfi);
+                
+                Element receivingDfi = document.createElement("receivingDfi");
+                receivingDfi.setTextContent(txn.getReceivingDfi());
+                transaction.appendChild(receivingDfi);
+                
+                Element amount = document.createElement("amount");
+                amount.setTextContent(txn.getAmount().toString());
+                transaction.appendChild(amount);
+                
+                Element effectiveEntryDate = document.createElement("effectiveEntryDate");
+                effectiveEntryDate.setTextContent(txn.getEffectiveEntryDate());
+                transaction.appendChild(effectiveEntryDate);
+                
+                root.appendChild(transaction);
             }
+            logger.debug("All transactions converted to XML elements successfully");
             
-            inputStream.close();
+            logger.debug("Transforming XML document to string");
+            TransformerFactory transformerFactory = TransformerFactory.newInstance();
+            Transformer transformer = transformerFactory.newTransformer();
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
+            
+            StringWriter writer = new StringWriter();
+            transformer.transform(new DOMSource(document), new StreamResult(writer));
+            
+            String xmlResult = writer.toString();
+            logger.info("Successfully converted {} transactions to XML, total size: {} characters", 
+                       transactions.size(), xmlResult.length());
+            return xmlResult;
             
         } catch (Exception e) {
-            throw new RuntimeException("Error reading ACH transactions XML file", e);
+            logger.error("Error converting transactions to XML", e);
+            throw new RuntimeException("Error converting transactions to XML", e);
         }
-        
-        return transactions;
-    }
-    
-    private String getTagValue(String tag, Element element) {
-        NodeList nodeList = element.getElementsByTagName(tag);
-        if (nodeList.getLength() > 0) {
-            return nodeList.item(0).getTextContent();
-        }
-        return "";
     }
 }
